@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tarot Overlay</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app" class="state-idle">
+      <div class="backdrop"></div>
+
+      <section id="idle" class="panel">
+        <p class="eyebrow">🔮 Таро-розклад</p>
+        <h1>Очікую питання...</h1>
+      </section>
+
+      <section id="drawing" class="panel hidden">
+        <p class="eyebrow">Розклад для <span id="draw-username"></span></p>
+        <h2 id="draw-question"></h2>
+        <div class="deck-animation">
+          <div class="card-back float-1"></div>
+          <div class="card-back float-2"></div>
+          <div class="card-back float-3"></div>
+        </div>
+        <p class="hint">Колода обирає карту...</p>
+      </section>
+
+      <section id="reveal" class="panel hidden">
+        <div class="card-scene">
+          <article id="tarot-card" class="tarot-card">
+            <div class="card-face card-back-face"></div>
+            <div class="card-face card-front-face">
+              <p class="card-label">Таро</p>
+              <h2 id="card-name"></h2>
+              <p id="card-orientation" class="orientation"></p>
+              <p id="card-keywords" class="keywords"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="reading" class="panel hidden">
+        <div class="reading-layout">
+          <article class="mini-card">
+            <p class="mini-label">Карта</p>
+            <h3 id="reading-card-name"></h3>
+            <p id="reading-orientation"></p>
+          </article>
+          <div class="reading-text">
+            <p class="eyebrow">Питання</p>
+            <p id="reading-question" class="question"></p>
+            <p class="eyebrow">Відповідь</p>
+            <p id="reading-interpretation" class="interpretation"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="error" class="panel hidden">
+        <h2>Щось пішло не так</h2>
+        <p id="error-message"></p>
+      </section>
+    </div>
+
+    <audio id="tts-audio" preload="auto"></audio>
+    <script src="./app.js"></script>
+  </body>
+</html>

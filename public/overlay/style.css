@@ -1,0 +1,268 @@
+:root {
+  --bg: rgba(8, 6, 20, 0.72);
+  --gold: #e7c27d;
+  --violet: #9b7dff;
+  --text: #f7f2ff;
+  --muted: #c9bfd9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text);
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 20%, rgba(155, 125, 255, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(231, 194, 125, 0.12), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.state-drawing .backdrop,
+.state-reveal .backdrop,
+.state-reading .backdrop {
+  opacity: 1;
+}
+
+.panel {
+  position: relative;
+  z-index: 2;
+  width: min(1200px, 92vw);
+  padding: 32px 40px;
+  border: 1px solid rgba(231, 194, 125, 0.35);
+  border-radius: 24px;
+  background: var(--bg);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+#idle h1 {
+  font-size: 42px;
+}
+
+#draw-question,
+.question {
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.deck-animation {
+  position: relative;
+  height: 280px;
+  margin: 28px auto 12px;
+  width: 220px;
+}
+
+.card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 2px solid rgba(231, 194, 125, 0.65);
+  background: linear-gradient(145deg, #24143f, #120a22);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.card-back::after {
+  content: "✦";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  font-size: 48px;
+  opacity: 0.8;
+}
+
+.float-1 {
+  transform: rotate(-8deg) translateY(0);
+  animation: floatA 1.2s ease-in-out infinite;
+}
+
+.float-2 {
+  transform: rotate(4deg) translate(18px, 12px);
+  animation: floatB 1.2s ease-in-out infinite;
+}
+
+.float-3 {
+  transform: rotate(12deg) translate(36px, 24px);
+  animation: floatC 1.2s ease-in-out infinite;
+}
+
+@keyframes floatA {
+  0%,
+  100% {
+    transform: rotate(-8deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-8deg) translateY(-12px);
+  }
+}
+
+@keyframes floatB {
+  0%,
+  100% {
+    transform: rotate(4deg) translate(18px, 12px);
+  }
+  50% {
+    transform: rotate(4deg) translate(18px, 0);
+  }
+}
+
+@keyframes floatC {
+  0%,
+  100% {
+    transform: rotate(12deg) translate(36px, 24px);
+  }
+  50% {
+    transform: rotate(12deg) translate(36px, 12px);
+  }
+}
+
+.card-scene {
+  perspective: 1200px;
+  height: 420px;
+  display: grid;
+  place-items: center;
+}
+
+.tarot-card {
+  position: relative;
+  width: 260px;
+  height: 390px;
+  transform-style: preserve-3d;
+  transition: transform 1s ease;
+}
+
+.state-reveal .tarot-card {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  backface-visibility: hidden;
+  border: 2px solid rgba(231, 194, 125, 0.65);
+}
+
+.card-back-face {
+  background: linear-gradient(145deg, #24143f, #120a22);
+}
+
+.card-front-face {
+  transform: rotateY(180deg);
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(160deg, #2a1a4a, #150d28);
+}
+
+.card-label {
+  margin: 0;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+#card-name {
+  font-size: 34px;
+}
+
+.orientation {
+  margin: 0;
+  color: var(--violet);
+  font-size: 18px;
+}
+
+.keywords {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.reading-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 28px;
+  text-align: left;
+}
+
+.mini-card {
+  border: 1px solid rgba(231, 194, 125, 0.35);
+  border-radius: 16px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mini-label {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#reading-card-name {
+  font-size: 28px;
+}
+
+.interpretation {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.45;
+}
+
+.hint {
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+#error-message {
+  color: #ffb4b4;
+  font-size: 22px;
+}
