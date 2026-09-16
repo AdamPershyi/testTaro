@@ -6,7 +6,11 @@ export function requireApiSecret(
   res: Response,
   next: NextFunction,
 ): void {
-  const provided = req.header('x-api-key') ?? req.header('authorization')?.replace(/^Bearer\s+/i, '');
+  const queryKey = typeof req.query.key === 'string' ? req.query.key : undefined;
+  const provided =
+    req.header('x-api-key') ??
+    req.header('authorization')?.replace(/^Bearer\s+/i, '') ??
+    queryKey;
 
   if (!provided || provided !== config.apiSecret) {
     res.status(401).json({ error: 'Unauthorized' });

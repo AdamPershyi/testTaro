@@ -1,100 +1,132 @@
-# Streamer.bot — налаштування Tarot Bot
+# Streamer.bot — налаштування Tarot Bot (C#)
 
-Streamer.bot працює **локально на твоєму ПК** і з’єднує Twitch з бекендом на Render.
+Streamer.bot працює **локально на ПК** і шле POST на Render через **Execute C# Code**.
 
-## Передумови
-
-- Streamer.bot підключений до Twitch
-- Channel Point Reward створена (наприклад **"🔮 Таро-розклад"**)
-- Бекенд задеплоєний, знаєш `API_SECRET` і URL (наприклад `https://tarot-bot.onrender.com`)
+Бекенд: `https://testtaro.onrender.com`  
+Overlay: `https://testtaro.onrender.com/overlay`
 
 ---
 
-## Сценарій 1: Редім → питання в чаті → API
+## Одноразово: reference для C#
 
-### Крок 1 — Channel Point Redemption Trigger
-
-1. Streamer.bot → **Triggers** → **Twitch** → **Channel Point Reward Redemption**
-2. Обери свою нагороду **"Таро"**
-3. Назва sub-action group: `Tarot / Start`
-
-### Крок 2 — Повідомлення в чат
-
-Додай **Send Message to Channel**:
-```
-@{user}, напиши своє питання для таро протягом 60 секунд ✨
-```
-
-### Крок 3 — Зберегти користувача в змінну
-
-Додай **Set Global Variable**:
-- Name: `tarot.pendingUser`
-- Value: `%user%`
-
-Таймер 60 сек (опційно через **Start Timer** sub-action).
-
-### Крок 4 — Trigger на повідомлення в чаті
-
-1. **Triggers** → **Twitch** → **Chat Message**
-2. Умова: `%user%` equals `%tarot.pendingUser%`
-3. Умова: `%message%` length > 5
-
-### Крок 5 — HTTP Request до бекенду
-
-Sub-action: **Core** → **Http Request**
-
-| Поле | Значення |
-|---|---|
-| Method | POST |
-| URL | `https://YOUR-APP.onrender.com/api/readings` |
-| Content Type | application/json |
-| Headers | `X-API-Key: YOUR_API_SECRET` |
-| Body | див. нижче |
-
-Body (JSON):
-```json
-{
-  "username": "{user}",
-  "question": "{message}"
-}
-```
-
-У Streamer.bot змінні зазвичай `%user%` та `%message%` — підстав відповідно до твоєї версії.
-
-### Крок 6 — Очистити pending user
-
-Після успішного запиту:
-- `tarot.pendingUser` = `` (порожньо)
-
-### Крок 7 — Підтвердження в чат
+У **Execute C# Code** → вкладка **References** → ПКМ → Add:
 
 ```
-@{user}, карта обирається... 🔮
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Net.Http.dll
 ```
+
+Потім **Find Refs** → **Compile** → **Save and Compile**.
+
+Без цієї DLL буде помилка `HttpClient could not be found`.
 
 ---
 
-## Сценарій 2: Простий тест без чату
+## C# код (основний) — POST на API
 
-Trigger: **Manual** або **Command** `!tarotTest`
+Використовуй у Action з HTTP-запитом.  
+Питання береться з аргументу `question` (для чату) або дефолтне (для тесту).
 
-HTTP POST:
-```json
+```csharp
+using System;
+using System.Net.Http;
+using System.Text;
+
+public class CPHInline
 {
-  "username": "TestUser",
-  "question": "Тестове питання для таро"
+    private static readonly HttpClient _httpClient = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(60)
+    };
+
+    public void Init()
+    {
+        _httpClient.DefaultRequestHeaders.Clear();
+    }
+
+    public bool Execute()
+    {
+        const string apiUrl = "https://testtaro.onrender.com/api/readings";
+        const string apiSecret = "ТВІЙ_API_SECRET";
+
+        CPH.TryGetArg("userName", out string userName);
+        CPH.TryGetArg("user", out string user);
+        string username = !string.IsNullOrWhiteSpace(userName) ? userName
+            : !string.IsNullOrWhiteSpace(user) ? user : "TestUser";
+
+        CPH.TryGetArg("question", out string question);
+        if (string.IsNullOrWhiteSpace(question))
+            question = "Тестове питання для таро";
+
+        if (question.Length < 3)
+        {
+            CPH.SendMessage("@" + username + ", напиши питання довше (мін. 3 символи)");
+            return false;
+        }
+
+        try
+        {
+            string json = "{\"username\":\"" + EscapeJson(username)
+                + "\",\"question\":\"" + EscapeJson(question) + "\"}";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            request.Headers.TryAddWithoutValidation("X-API-Key", apiSecret);
+
+            var response = _httpClient.SendAsync(request).GetAwaiter().GetResult();
+            string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            CPH.LogInfo("TAROT: HTTP " + (int)response.StatusCode + " " + body);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                CPH.SendMessage("@" + username + ", помилка таро (" + (int)response.StatusCode + ")");
+                return false;
+            }
+
+            CPH.SendMessage("@" + username + ", карта обирається... 🔮");
+            return true;
+        }
+        catch (Exception e)
+        {
+            CPH.LogError("TAROT ERROR: " + e.Message);
+            CPH.SendMessage("@" + username + ", помилка таро. Спробуй ще раз.");
+            return false;
+        }
+    }
+
+    private static string EscapeJson(string value)
+    {
+        return value
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\n", " ")
+            .Replace("\r", "");
+    }
 }
 ```
 
-Перевір OBS overlay — має з’явитись анімація.
+> Заміни `ТВІЙ_API_SECRET` на значення з Render (`API_SECRET`).
+
+---
+
+## Сценарій 1 — тест командою `!tarotTest`
+
+**Trigger:** Commands → `!tarotTest`  
+**Sub-actions:** один **Execute C# Code** з кодом вище.
+
+---
+
+## Сценарій 2 — channel points + питання з чату
+
+Детально: [streamer-bot-channel-points.md](./streamer-bot-channel-points.md)
+
+**2 Actions:** редім → зберегти юзера → чат → C# POST.
 
 ---
 
 ## OBS
 
-1. Browser Source → `https://YOUR-APP.onrender.com/overlay`
-2. 1920×1080
-3. Переконайся що overlay **видимий** під час розкладу
+Browser Source: `https://testtaro.onrender.com/overlay` (1920×1080, звук через OBS ✅)
 
 ---
 
@@ -102,21 +134,14 @@ HTTP POST:
 
 | Проблема | Рішення |
 |---|---|
-| 401 Unauthorized | перевір `X-API-Key` = `API_SECRET` на Render |
-| Overlay не реагує | перевір WebSocket (F12 у browser source → dev tools якщо доступно) |
-| Довга затримка | Render free cold start — прогрій `/api/health` перед стрімом |
-| Немає звуку | OBS → Browser Source → не muted; Control audio via OBS |
-| OpenAI помилка | перевір ключ і баланс; fallback текст все одно має з’явитись |
+| `HttpClient could not be found` | Додай `System.Net.Http.dll` у References |
+| `Id is empty` | Compile → Save and Compile |
+| 401 | `apiSecret` = `API_SECRET` на Render |
+| `???` в overlay | POST через C# + UTF-8 |
+| Чат не реагує | `%user%` == `~tarot.pendingUser~` |
 
 ---
 
-## Twitch API — коли потрібна?
+## Twitch API
 
-**Не потрібна** для базового сценарію через Streamer.bot.
-
-Потрібна лише якщо захочеш:
-- власного Twitch-бота без Streamer.bot
-- автоматичне повернення channel points
-- EventSub напряму в Node
-
-Для старту — **Streamer.bot достатньо**.
+Не потрібна для цього сценарію.

@@ -30,6 +30,34 @@ export function createApiRouter(overlay: OverlayHub): Router {
     });
   });
 
+  router.get('/trigger', requireApiSecret, (req, res) => {
+    const parsed = createReadingSchema.safeParse({
+      username: req.query.username,
+      question: req.query.question,
+    });
+
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'Invalid request',
+        details: parsed.error.flatten(),
+        hint: 'Use ?username=...&question=...&key=API_SECRET',
+      });
+      return;
+    }
+
+    try {
+      const { reading, queuePosition } = enqueueReading(parsed.data, overlay);
+      res.status(202).json({
+        id: reading.id,
+        status: reading.status,
+        queuePosition,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to enqueue reading';
+      res.status(429).json({ error: message });
+    }
+  });
+
   router.post('/readings', requireApiSecret, (req, res) => {
     const parsed = createReadingSchema.safeParse(req.body);
     if (!parsed.success) {
