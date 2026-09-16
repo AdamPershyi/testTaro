@@ -3,9 +3,11 @@ import type { CreateReadingRequest, Reading } from '../types/index';
 import { config } from '../config';
 import { drawRandomCard } from './deckService';
 import {
+  buildDeniedInterpretation,
   buildFallbackInterpretation,
   generateInterpretation,
   generateSpeech,
+  shouldDenyReading,
 } from './openaiService';
 import type { OverlayHub } from '../websocket/overlayHub';
 
@@ -176,18 +178,22 @@ async function runReading(id: string, overlay: OverlayHub): Promise<void> {
   await delay(1500);
 
   let interpretation: string;
-  try {
-    interpretation = await generateInterpretation(
-      reading.username,
-      reading.question,
-      drawn,
-    );
-  } catch {
-    interpretation = buildFallbackInterpretation(
-      reading.username,
-      reading.question,
-      drawn,
-    );
+  if (shouldDenyReading()) {
+    interpretation = buildDeniedInterpretation(reading.username);
+  } else {
+    try {
+      interpretation = await generateInterpretation(
+        reading.username,
+        reading.question,
+        drawn,
+      );
+    } catch {
+      interpretation = buildFallbackInterpretation(
+        reading.username,
+        reading.question,
+        drawn,
+      );
+    }
   }
 
   updateReading(id, { interpretation, status: 'ready' });
@@ -196,9 +202,7 @@ async function runReading(id: string, overlay: OverlayHub): Promise<void> {
   try {
     audioBuffer = await generateSpeech(interpretation);
   } catch {
-    audioBuffer = await generateSpeech(
-      buildFallbackInterpretation(reading.username, reading.question, drawn),
-    );
+    audioBuffer = await generateSpeech(interpretation);
   }
 
   storeAudio(id, audioBuffer, 'audio/mpeg');
