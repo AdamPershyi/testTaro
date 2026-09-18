@@ -3,12 +3,11 @@ import type { CreateReadingRequest, Reading } from '../types/index';
 import { config } from '../config';
 import { drawRandomCard } from './deckService';
 import {
-  buildDeniedInterpretation,
   buildFallbackInterpretation,
   generateInterpretation,
   generateSpeech,
-  shouldDenyReading,
 } from './openaiService';
+import { buildGagInterpretation, pickReadingGag } from './gagService';
 import type { OverlayHub } from '../websocket/overlayHub';
 
 const readings = new Map<string, Reading>();
@@ -178,8 +177,9 @@ async function runReading(id: string, overlay: OverlayHub): Promise<void> {
   await delay(1500);
 
   let interpretation: string;
-  if (shouldDenyReading()) {
-    interpretation = buildDeniedInterpretation(reading.username);
+  const gag = pickReadingGag();
+  if (gag !== 'none') {
+    interpretation = buildGagInterpretation(reading.username, drawn, gag);
   } else {
     try {
       interpretation = await generateInterpretation(
