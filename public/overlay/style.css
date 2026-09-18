@@ -188,16 +188,37 @@ h3 {
 }
 
 .card-back-face {
-  background: linear-gradient(145deg, #24143f, #120a22);
+  background:
+    url("./cards/card-back.png") center / cover no-repeat,
+    linear-gradient(145deg, #24143f, #120a22);
 }
 
 .card-front-face {
   transform: rotateY(180deg);
   display: grid;
-  align-content: center;
-  gap: 12px;
-  padding: 24px;
+  align-content: start;
+  gap: 8px;
+  padding: 16px;
   background: linear-gradient(160deg, #2a1a4a, #150d28);
+}
+
+.card-art,
+.mini-art {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: none;
+}
+
+.card-art.is-on,
+.mini-art.is-on {
+  display: block;
+}
+
+.card-art.is-reversed,
+.mini-art.is-reversed {
+  transform: rotate(180deg);
 }
 
 .card-label {

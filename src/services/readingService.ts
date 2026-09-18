@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { CreateReadingRequest, Reading } from '../types/index';
 import { config } from '../config';
-import { drawRandomCard } from './deckService';
+import { drawRandomCard, getCardImageUrl } from './deckService';
 import {
   buildFallbackInterpretation,
   generateInterpretation,
@@ -170,6 +170,7 @@ async function runReading(id: string, overlay: OverlayHub): Promise<void> {
         reversed: drawn.reversed,
         keywords: drawn.card.keywords,
         baseMeaning: drawn.reversed ? drawn.card.reversed : drawn.card.upright,
+        imageUrl: getCardImageUrl(drawn.card.id),
       },
     },
   });
@@ -219,6 +220,7 @@ async function runReading(id: string, overlay: OverlayHub): Promise<void> {
         id: drawn.card.id,
         nameUk: drawn.card.nameUk,
         reversed: drawn.reversed,
+        imageUrl: getCardImageUrl(drawn.card.id),
       },
       audioUrl: `/api/readings/${id}/audio`,
     },

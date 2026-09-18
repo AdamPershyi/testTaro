@@ -77,6 +77,27 @@ function showDrawing(payload) {
   setState('drawing');
 }
 
+function setCardArt(img, imageUrl, reversed) {
+  if (!img) {
+    return;
+  }
+  img.classList.remove('is-on', 'is-reversed');
+  if (!imageUrl) {
+    img.removeAttribute('src');
+    return;
+  }
+  img.onload = () => {
+    img.classList.add('is-on');
+    if (reversed) {
+      img.classList.add('is-reversed');
+    }
+  };
+  img.onerror = () => {
+    img.classList.remove('is-on', 'is-reversed');
+  };
+  img.src = imageUrl;
+}
+
 function showReveal(payload) {
   const card = payload.card ?? {};
   document.getElementById('card-name').textContent = card.nameUk ?? 'Карта';
@@ -86,6 +107,7 @@ function showReveal(payload) {
   document.getElementById('card-keywords').textContent = Array.isArray(card.keywords)
     ? card.keywords.join(' • ')
     : '';
+  setCardArt(document.getElementById('card-art'), card.imageUrl, card.reversed);
   setState('reveal');
 }
 
@@ -98,6 +120,7 @@ function showReading(payload, readingId) {
   document.getElementById('reading-question').textContent = payload.question ?? '';
   document.getElementById('reading-interpretation').textContent =
     payload.interpretation ?? '';
+  setCardArt(document.getElementById('reading-card-art'), card.imageUrl, card.reversed);
 
   setState('reading');
 

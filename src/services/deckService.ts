@@ -38,6 +38,10 @@ export function getCardById(id: string): TarotCard | undefined {
   return loadDeck().find((card) => card.id === id);
 }
 
+export function getCardImageUrl(cardId: string): string {
+  return `/overlay/cards/${cardId}.png`;
+}
+
 export function getCardMeaning(drawn: DrawnCard): string {
   return drawn.reversed ? drawn.card.reversed : drawn.card.upright;
 }
